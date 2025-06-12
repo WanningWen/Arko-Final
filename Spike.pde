@@ -1,68 +1,40 @@
 public class Spike extends Danger {
-  //
-  // private variables
-  private float originX, originY;
-  private float pDir, pOffset, pRadius, pTimer;
-  private String name; // costume
-  private int typ; // is it stationary, gliding, temporary, trampoline, etc?
-  private boolean visible; // 0 = hidden, 1 = visible I think
-  private float x, y;
-  private PImage p;
-  public float scrollX, scrollY;
-  private float currentX, currentY;
-  public boolean devReset;
-  public Spike(String costume, float xpos, float ypos, int xlen, int ylen) {
-    //
-    super(xpos, ypos, xlen, ylen);
-    this.x = xpos;
-    this.y = ypos;
-    this.originX = xpos;
-    this.originY = ypos;
-    this.name = costume;
-    this.typ = 0; // will probably configure this for different types of danger and/or spikes later, for now this does nothing though
-    this.pTimer = 0;
-    this.scrollX = 0;
-    this.scrollY = 0;
-    this.currentX = this.x;
-    this.currentY = this.y;
-    this.devReset = false;
-    PImage img;
-    img = loadImage(this.name + ".png");
-    img.resize(xlen, ylen);
-    this.p = img;
-    image(p, this.x, this.y);
+  private final float originX, originY;
+  private final PImage p;
+  public boolean devReset = false;
+
+  public Spike(String costume, float xpos, float ypos, int w, int h) {
+    super(xpos, ypos, w, h);
+    originX = xpos; 
+    originY = ypos;
+    p = loadImage(costume + ".png");
+    p.resize(w, h);
   }
+
+  @Override
   public void draw() {
-    // draw all platforms
-    image(this.p, this.x, this.y);
+    // draw using screen coords
+    image(p, currentX, currentY);
   }
-  public float getX() {
-    return this.x;
-  }
-  public float getY() {
-    return this.y;
-  }
-  public void center() {
-    // reset
-    this.x = this.originX;
-    this.y = this.originY;
-    this.scrollX = 0;
-    this.scrollY = 0;
-  }
-  public void position(boolean moveX, boolean moveY) {
-    if (moveX) {
-      this.x -= this.scrollX;
-    }
-    if (moveY) {
-      this.y -= this.scrollY;
-    }
-    //println("scrollX: " + scrollX + "\n scrollY: " + scrollY);
-  }
+
+  @Override
   public void tick(boolean moveX, boolean moveY) {
-    this.position(moveX, moveY);
-    if (this.devReset) {
-      this.center();
+    if (devReset) {
+      x = originX;
+      y = originY;
+      devReset = false;
     }
-    this.draw();
+    super.tick(moveX, moveY);  // calls Danger.position(moveX,moveY) + draw()
   }
+
+  /** Reset this spike back to its original world position */
+  public void center() {
+    x = originX;
+    y = originY;
+    // if you ever scroll outside of draw, clear those too:
+    scrollX = 0;
+    scrollY = 0;
+    devReset = false;
+  }
+
 }

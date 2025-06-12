@@ -157,14 +157,20 @@ class Player extends Thing {
     return false; // there we go1
   }
   public boolean touchingSpikes() {
-    //
-    for (int i = 0; i < this.spikes.length; i++) {
-      if (super.touching2(this.spikes[i], this.x, this.y, this.spikes[i].getX(), this.spikes[i].getY())) {
+    for (int i = 0; i < spikes.length; i++) {
+      // ← use spikes[i].x and spikes[i].y instead of getX()/getY()
+      if (super.touching2(
+            spikes[i],
+            this.x, this.y,
+            spikes[i].x, spikes[i].y
+          )) {
+        println("Spike hit at player("+ x +","+ y +") vs spike("+ spikes[i].x +","+ spikes[i].y +")");
         return true;
       }
     }
-    return false; // there we go1
+    return false;
   }
+
   // position function:
   public void position() {
     // there is a big difference between saying "this.x -= this.scrollX" and having a new variable equal this value because the first one actually changes the value of this.x, which we don't want to do.

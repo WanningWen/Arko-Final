@@ -12,6 +12,10 @@ Spike lv1d2;
 Platform[] platforms;
 Spike[] spikes;
 boolean gameRunning;
+int deathTimer = 0;       // counts frames since death began
+int deathDuration = 60;   // e.g. 60 frames ≈ 1 second at 60 FPS
+boolean isDead = false;
+
 
 void setup() {
   //
@@ -40,9 +44,8 @@ void setup() {
 
 
 void draw() {
-  //
   // testing
-  if (!p.dead) {
+  if (!isDead) {
     background(255); // clear the background
     p.draw();
     p.tick();
@@ -59,58 +62,58 @@ void draw() {
       spikes[j].scrollY = p.getScrollY();
       spikes[j].tick(p.hasMovedX, p.hasMovedY);
     }
+    // collision → start death sequence
+    if (!isDead && p.touchingSpikes()) {
+      isDead     = true;
+      deathTimer = 0;
+    }
+    
     // reset player scrollX and scrollY
     p.scrollX = 0;
     p.scrollY = 0;
     //println("Called draw");
   } else {
-    // player is dead, do stuff
-    // first player animation for death, then set devReset to true for platforms, spikes, everything else
-    int counter = 0;
-    // change the mod number depending on the speed of the animation
-    // 100 should be 0.1 seconds I believe
-    for (int m = 0; m < 10; m++) {
-      // this will be 2 times the number of times the player should flash on and off
-      background(255); // clear the background
-      for (int n = 0; n < platforms.length; n++) {
-        // draw platforms
-        platforms[n].draw();
-      }
-      for (int o = 0; o < spikes.length; o++) {
-        // draw spikes
-        spikes[o].draw();
-      }
-      if (m % 2 == 0) {
-        p.draw();
-        println("drew player");
-      }
-      counter += 1;
-      try {
-        Thread.sleep(1000);
-        println("m: " + m);
-      } catch (Exception f) {
-        println("java sucks");
-      }
+    // death animation: blink player on/off every 10 frames
+    background(255);
+    // draw static world
+    for (Platform plt : platforms) plt.draw();
+    for (Spike sp : spikes)   sp.draw();
+
+    // blink: show player only on even 10-frame intervals
+    if ( (deathTimer / 10) % 2 == 0 ) {
+      p.draw();
     }
-    try {
-      Thread.sleep(5000);
-    } catch (Exception e) {
-      println("java is annoying");
+
+    // advance timer
+    deathTimer++;
+
+    // when done, reset everything:
+    if (deathTimer >= deathDuration) {
+      resetLevel();
     }
-    // the above should make the program not do anything for five seconds while the player is hidden, then we will reset.
-    p.center();
-    for (int r = 0; r < platforms.length; r++) {
-      //
-      platforms[r].center();
-      platforms[r].draw();
-    }
-    for (int s = 0; s < spikes.length; s++) {
-      //
-      spikes[s].center();
-      spikes[s].draw();
-    }
-    // reset player scrollX and scrollY
   }
+}
+
+void resetLevel() {
+  // put player back and clear its state
+  p.center();
+  p.sy = 0;
+  p.doubleJump = false;
+  p.jumpCounter = 0;
+
+  // reset platforms & spikes
+  for (Platform plt : platforms) {
+    plt.center();
+    plt.devReset = false;
+  }
+  for (Spike sp : spikes) {
+    sp.center();
+    sp.devReset = false;
+  }
+
+  // clear death flag & timer
+  isDead     = false;
+  deathTimer = 0;
 }
 
 
