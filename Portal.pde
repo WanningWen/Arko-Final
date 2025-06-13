@@ -1,28 +1,33 @@
-class Portal extends Thing {
-  PImage sprite;
-  boolean active = false;
+// Portal.pde
 
-  Portal(String imgName, float xpos, float ypos, int w, int h) {
-    super(w, h, xpos, ypos, 0, 0);
-    sprite = loadImage(imgName + ".png");          // preload portal sprite :contentReference[oaicite:6]{index=6}
-    sprite.resize(w, h);
+class Portal extends Platform {
+  public boolean active = false;
+
+  /** 
+   * x,y,w,h are world coords & size; 
+   * "portal" tells the super‐constructor to load portal.png 
+   */
+  Portal(float xpos, float ypos, int w, int h) {
+    super("portal", xpos, ypos, w, h);
   }
 
-  public void position() {
-    currentX = x - scrollX;
-    currentY = y - scrollY;
-  }
-
+  /** Only draw the portal sprite when its active */
+  @Override
   public void draw() {
-    if (active) image(sprite, currentX, currentY);
+    if (active) {
+      super.draw();  // draw the portal.png at currentX,currentY
+    }
   }
 
-  public void tick(Player p) {
-    position();
+  /** The Platform.tick() already handles position() & draw(), so we can reuse it */
+  @Override
+  public void tick(boolean moveX, boolean moveY) {
+    position(moveX, moveY);
     draw();
   }
 
+  /** Win when player overlaps this portal world box */
   public boolean reached(Player p) {
-    return active && p.touching2(this, p.x, p.y, x, y);
+    return active && p.touching2(this, p.x, p.y, this.x, this.y);
   }
 }
