@@ -43,14 +43,6 @@ void setup() {
   spikes = new Spike[] {lv1d1, lv1d2};
   p = new Player(width/2-10, height/2-10, 0, 0, platforms, spikes);
   
-  coins = new Coin[] {
-    new Coin("coin", 600, height/2 - 30, 32, 32),
-    new Coin("coin", 1200, height/2 - 60, 32, 32),
-    new Coin("coin", 1800, height/2 - 90, 32, 32)
-  };                                                // positions & sizes as needed :contentReference[oaicite:8]{index=8}
-  
-  exitPortal = new Portal("portal", 2400, height/2 - 100, 48, 64);  // set where the portal appears
-
   // x = 390, y = 240
   gameRunning = true;
 }
@@ -85,7 +77,7 @@ void draw() {
     fill(255);
     textAlign(CENTER, CENTER);
     textSize(48);
-    text("🎉 YOU PASSED! 🎉", width/2, height/2);
+    text("YOU PASSED!", width/2, height/2);
   }
   else {
     // — NORMAL GAMEPLAY —
@@ -117,23 +109,6 @@ void draw() {
     if (!isDead && p.touchingSpikes()) {
       isDead     = true;
       deathTimer = 0;
-    }
-  
-    // 5) Coins (using your new tick(p) API)
-    for (Coin c : coins) {
-      c.tick(p);
-    }
-  
-    // 6) Portal unlock & win
-    boolean allDone = true;
-    for (Coin c : coins) if (!c.collected) { allDone = false; break; }
-    exitPortal.active = allDone;
-  
-    exitPortal.scrollX = p.getScrollX();
-    exitPortal.scrollY = p.getScrollY();
-    exitPortal.tick(p);
-    if (!levelPassed && exitPortal.reached(p)) {
-      levelPassed = true;
     }
   
     // 7) Reset scroll for next frame

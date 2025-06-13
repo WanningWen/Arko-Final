@@ -168,5 +168,16 @@ class Thing {
     }
     // placeholder:
     return false;
+  }  
+  
+  /** Return this objects world X coordinate */
+  public float getX() {
+    return x;
   }
+
+  /** Return this objects world Y coordinate */
+  public float getY() {
+    return y;
+  }
+
 }

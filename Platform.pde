@@ -1,73 +1,56 @@
+// Platform.pde
+
 class Platform extends Thing {
-  // private variables
-  private float originX, originY;
-  private float pDir, pOffset, pRadius, pTimer;
-  private String name; // costume
-  private int typ; // is it stationary, gliding, temporary, trampoline, etc?
-  private boolean visible; // 0 = hidden, 1 = visible I think
-  private float x, y;
-  private PImage p;
-  public float scrollX, scrollY;
-  private float currentX, currentY;
-  public boolean devReset;
-  public Platform(String costume, float xpos, float ypos, int xlen, int ylen) {
-    //
-    // xlen, ylen will be given in an array in Game.pde based on the lengths of the different platforms
-    super(xlen, ylen, xpos, ypos, 0, 0);
-    this.x = xpos;
-    this.y = ypos;
-    this.originX = xpos;
-    this.originY = ypos;
-    this.name = costume;
-    this.typ = 0;
-    this.pTimer = 0;
-    this.scrollX = 0;
-    this.scrollY = 0;
-    this.currentX = this.x;
-    this.currentY = this.y;
-    this.devReset = false;
-    PImage img;
-    img = loadImage(this.name + ".png");
-    img.resize(xlen, ylen);
-    this.p = img;
-    image(p, this.x, this.y);
+  // screen coords (computed each tick)
+  public float currentX, currentY;
+
+  // save these for resetting
+  private final float originX, originY;
+
+  // your platform image
+  private final PImage sprite;
+
+  // dev‐reset flag (if you press space, etc.)
+  public boolean devReset = false;
+
+  // Constructor: load the sprite and record its world x,y
+  Platform(String imgName, float xpos, float ypos, int w, int h) {
+    super(w, h, xpos, ypos, 0, 0);
+    originX = xpos;
+    originY = ypos;
+    sprite = loadImage(imgName + ".png");
+    sprite.resize(w, h);
   }
-  public void draw() {
-    // draw all platforms
-    image(this.p, this.x, this.y);
-  }
-  public float getX() {
-    //
-    return this.x;
-  }
-  public float getY() {
-    //
-    return this.y;
-  }
-  public void center() {
-    // reset
-    this.x = this.originX;
-    this.y = this.originY;
-    this.scrollX = 0;
-    this.scrollY = 0;
-  }
-  // position function:
+
+  /** 1) Position: scroll world coords and compute on‐screen coords */
   public void position(boolean moveX, boolean moveY) {
-    //
-    if (moveX) {
-      this.x -= this.scrollX;
-    }
-    if (moveY) {
-      this.y -= this.scrollY;
-    }
-    //println("scrollX: " + scrollX + "\n scrollY: " + scrollY);
+    if (moveX) x -= scrollX;
+    if (moveY) y -= scrollY;
+    currentX = x - scrollX;
+    currentY = y - scrollY;
   }
+
+  /** 2) Draw at the computed screen coords */
+  public void draw() {
+    image(sprite, currentX, currentY);
+  }
+
+  /** 3) Tick: update position → optional reset → draw */
   public void tick(boolean moveX, boolean moveY) {
-    //
-    this.position(moveX, moveY);
-    if (this.devReset) {
-      this.center();
+    position(moveX, moveY);
+    if (devReset) {
+      // snap back
+      x = originX;
+      y = originY;
+      devReset = false;
     }
-    this.draw();
+    draw();
+  }
+
+  /** 4) Center helper for your reset logic */
+  public void center() {
+    x = originX;
+    y = originY;
+    scrollX = scrollY = 0;
   }
 }
