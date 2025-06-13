@@ -32,6 +32,11 @@ class Player extends Thing {
   public boolean dead;
   //
   private boolean hidden;
+  
+  
+  //coin
+  public int collected = 0;
+  
   public Player(float xpos, float ypos, float scrollX, float scrollY, Platform[] platformList, Spike[] spikeList) {
     //
     super(20, 20, xpos, ypos, 7, (float) 0);
