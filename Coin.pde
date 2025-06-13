@@ -1,44 +1,75 @@
-public float currentX, currentY;
+// Coin.pde
 
 class Coin extends Thing {
-  // add these fields:
+  // screen coords (updated each tick)
   public float currentX, currentY;
-  public PImage sprite;
-  public boolean collected = false;
 
+  // save for reset
+  private final float originX, originY;
+
+  // coin sprite
+  private final PImage sprite;
+
+  // state flags
+  public boolean collected = false;
+  public boolean devReset  = false;
+
+  /** Load the coin image and remember its starting world x,y. */
   Coin(String imgName, float xpos, float ypos, int w, int h) {
     super(w, h, xpos, ypos, 0, 0);
-    sprite = loadImage(imgName + ".png");
+    originX = xpos;
+    originY = ypos;
+    sprite  = loadImage(imgName + ".png");
     sprite.resize(w, h);
   }
 
-  // 1) Compute screen coords without changing world x/y
-  public void position(float scrollX, float scrollY) {
+  /** 1) Scroll world coords and compute on-screen coords */
+  public void position(boolean moveX, boolean moveY) {
+    if (moveX) x -= scrollX;
+    if (moveY) y -= scrollY;
     currentX = x - scrollX;
     currentY = y - scrollY;
   }
 
-  // 2) Draw only if not yet collected
+  /** 2) Draw the coin sprite if it hasn’t been collected */
   public void draw() {
     if (!collected) {
       image(sprite, currentX, currentY);
     }
   }
 
-  // 3) Tick: update position, check collision, then draw
-  public void tick(Player p) {
-    // pass in the players scroll offsets
-    position(p.getScrollX(), p.getScrollY());
+  /**
+   * 3) Full tick:
+   *    – position() to scroll it
+   *    – reset if devReset
+   *    – check collision with player
+   *    – draw if still active
+   */
+  public void tick(boolean moveX, boolean moveY, Player p) {
+    position(moveX, moveY);
 
-    // collision with player (world x/y vs world x/y)
-    if (!collected && p.touching2(this, p.x, p.y, x, y)) {
+    if (devReset) {
+      // snap back to original world position
+      x = originX;
+      y = originY;
+      collected = false;
+      devReset  = false;
+    }
+
+    // collision in world-space
+    if (!collected && super.touching2(p, this.x, this.y, p.x, p.y)) {
       collected = true;
-      p.collected++;
+      p.collected++;  // increment player’s score if you track it
     }
 
     draw();
   }
-  
-  public float getWorldX() { return x; }
-  public float getWorldY() { return y; }
+
+  /** 4) Center helper for resetLevel() */
+  public void center() {
+    x = originX;
+    y = originY;
+    scrollX = scrollY = 0;
+    collected = false;
+  }
 }

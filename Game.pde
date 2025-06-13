@@ -1,80 +1,89 @@
 Player p;
-Platform lv1p1;
-Platform lv1p2;
-Platform lv1p3;
-Platform lv1p4;
-Platform lv1p5;
-Platform lv1p6;
-Platform lv1p7;
-//Platform lv1p8;
-Spike lv1d1;
-Spike lv1d2;
+Platform lv1p1, lv1p2, lv1p3, lv1p4, lv1p5, lv1p6, lv1p7;
+Spike lv1d1, lv1d2;
 Platform[] platforms;
 Spike[] spikes;
+ArrayList<Coin> coins;
 boolean gameRunning;
-int deathTimer = 0;       // counts frames since death began
-int deathDuration = 60;   // e.g. 60 frames ≈ 1 second at 60 FPS
-boolean isDead = false;
+boolean immortal;
 
-// new stuff
-Coin[]   coins;
+int deathTimer    = 0;       // counts frames since death began
+int deathDuration = 60;      // e.g. 60 frames ≈ 1 second at 60 FPS
+boolean isDead    = false;
+
+// new portal stuff
 Portal   exitPortal;
 boolean levelPassed = false;
-
+boolean coinsCollected = false;
 
 void setup() {
-  //
-  size(800, 500); // 800 is the length (horizontal), 500 is the height (vertical)
-  // more testing
-  lv1p1 = new Platform("Test22", 40, height/2+150, 538, 85); // original dimensions 269*85
-  lv1p2 = new Platform("Test22", 700, height/2+100, 538, 85); // original dimensions 269*85
-  lv1p3 = new Platform("Test22", 1238, height/2+15, 538, 85); // original dimensions 269*85
-  lv1p4 = new Platform("Test22", 1776, height/2+80, 538, 85); // original dimensions 269*85
-  lv1p5 = new Platform("Test22", 2400, height/2-50, 269, 50); // original dimensions 269*85
-  lv1p6 = new Platform("Test22", 2700, height/2-120, 1076, 85); // original dimensions 269*85
-  lv1p7 = new Platform("Test22", 800, height/2-110, 538, 85); // original dimensions 269*85
-  lv1d1 = new Spike("Spikes", 250, height/2+150-21, 65, 21); // original dimensions 65*21
-  //lv1p8 = new Platform("Floating Island", 1500, height/2-160, 117, 48); // original dimensions 117*48
-  lv1d2 = new Spike("Spikes", 900, height/2+100-21, 65, 21);
-  
-  // x = 40, y = 400
-  // IMPORTANT: INITIALIZE PLATFORMS BEFORE PLAYER!
-  platforms = new Platform[] {lv1p1, lv1p2, lv1p3, lv1p4, lv1p5, lv1p6, lv1p7};
-  spikes = new Spike[] {lv1d1, lv1d2};
-  p = new Player(width/2-10, height/2-10, 0, 0, platforms, spikes);
-  
-  coins = new Coin[] {
-    new Coin("coin", 600, height/2 - 30, 32, 32),
-    new Coin("coin", 1200, height/2 - 60, 32, 32),
-    new Coin("coin", 1800, height/2 - 90, 32, 32)
-  };                                                // positions & sizes as needed :contentReference[oaicite:8]{index=8}
-  
-  exitPortal = new Portal("portal", 2400, height/2 - 100, 48, 64);  // set where the portal appears
+  size(800, 500);
 
-  // x = 390, y = 240
+  // — Platforms —
+  lv1p1 = new Platform("Test22",  40,  height/2+150, 538, 85);
+  lv1p2 = new Platform("Test22", 700,  height/2+100, 538, 85);
+  lv1p3 = new Platform("Test22",1238,  height/2+15,  538, 85);
+  lv1p4 = new Platform("Test22",1776,  height/2+80,  538, 85);
+  lv1p5 = new Platform("Test22",2400,  height/2-50,  269, 50);
+  lv1p6 = new Platform("Test22",2700,  height/2-120, 1076,85);
+  lv1p7 = new Platform("Test22", 800,  height/2-110, 538, 85);
+  platforms = new Platform[]{lv1p1,lv1p2,lv1p3,lv1p4,lv1p5,lv1p6,lv1p7};
+  
+  
+
+  // — Spikes —
+  lv1d1 = new Spike("Spikes", 250,  height/2+150-21, 65,21);
+  lv1d2 = new Spike("Spikes", 800,  height/2+100-21, 65,21);
+  spikes = new Spike[]{lv1d1, lv1d2};
+  
+  // — coins —
+  coins = new ArrayList<Coin>();
+  int coinsPerPlat = 2;
+  int coinSize     = 32;
+  
+  // Find the rightmost platform edge in world coords
+  float mapEndX = 0;
+  for (Platform plt : platforms) {
+    mapEndX = max(mapEndX, plt.x + plt.xsize);
+    for (int i = 0; i < coinsPerPlat; i++) {
+      float cx = plt.x + (plt.xsize/(coinsPerPlat+1))*(i+1) - coinSize/2;
+      float cy = plt.y - coinSize - 5;
+      coins.add(new Coin("coin", cx, cy, coinSize, coinSize));
+    }
+  }
+  
+  // — Player —
+  p = new Player(width/2-10, height/2-10, 0, 0, platforms, spikes);
   gameRunning = true;
+
+  // — Portal —
+  // 2) Choose an offset beyond that edge
+  float portalX = mapEndX;     // 100px past the last platform
+  float portalY = height/2 - 200;    // adjust vertically as desired
+  println("Spawning portal at (" + portalX + "," + portalY + ")");
+  // 3) Create and activate the portal
+  exitPortal = new Portal(portalX, portalY, 48, 64);
+  exitPortal.active = false;
 }
 
-
-
 void draw() {
-  // testing
+  if (immortal) {
+    isDead = false;
+  }
   if (isDead) {
-    // death animation: blink player on/off every 10 frames
+    // — DEATH BLINK & MESSAGE —
     background(255);
-    // draw static world
     for (Platform plt : platforms) plt.draw();
-    for (Spike sp : spikes)   sp.draw();
+    for (Spike sp : spikes)    sp.draw();
 
-    // blink: show player only on even 10-frame intervals
-    if ( (deathTimer / 10) % 2 == 0 ) {
+    fill(255, 0, 0);
+    textSize(64);
+    text("You Died!", width/2-110, 100);
+
+    if ((deathTimer / 10) % 2 == 0) {
       p.draw();
     }
-
-    // advance timer
     deathTimer++;
-
-    // when done, reset everything:
     if (deathTimer >= deathDuration) {
       resetLevel();
     }
@@ -85,88 +94,80 @@ void draw() {
     fill(255);
     textAlign(CENTER, CENTER);
     textSize(48);
-    text("🎉 YOU PASSED! 🎉", width/2, height/2);
+    text("YOU PASSED!", width/2, height/2);
   }
   else {
     // — NORMAL GAMEPLAY —
     background(255);
-  
+
     // 1) Player
     p.draw();
     p.tick();
-  
-    // 2) Death by falling
+
+    // 2) Fall‐off‐screen death
     if (p.getY() > height) {
-      isDead     = true;
+      isDead = true;
       deathTimer = 0;
     }
-  
+
     // 3) Platforms
     for (Platform plt : platforms) {
       plt.scrollX = p.getScrollX();
       plt.scrollY = p.getScrollY();
       plt.tick(p.hasMovedX, p.hasMovedY);
     }
-  
-    // 4) Spikes and spike‐death
+
+    // 4) Spikes & death
     for (Spike sp : spikes) {
       sp.scrollX = p.getScrollX();
       sp.scrollY = p.getScrollY();
       sp.tick(p.hasMovedX, p.hasMovedY);
     }
     if (!isDead && p.touchingSpikes()) {
-      isDead     = true;
+      isDead = true;
       deathTimer = 0;
     }
-  
-    // 5) Coins (using your new tick(p) API)
+
+    // 5) Portal
+    boolean allCollected = true;
     for (Coin c : coins) {
-      c.tick(p);
+      if (!c.collected) {
+        allCollected = false;
+        break;
+      }
     }
-  
-    // 6) Portal unlock & win
-    boolean allDone = true;
-    for (Coin c : coins) if (!c.collected) { allDone = false; break; }
-    exitPortal.active = allDone;
-  
+    exitPortal.active = allCollected;
+    
+    // 5b) Draw & tick portal
     exitPortal.scrollX = p.getScrollX();
     exitPortal.scrollY = p.getScrollY();
-    exitPortal.tick(p);
+    exitPortal.tick(p.hasMovedX, p.hasMovedY);
     if (!levelPassed && exitPortal.reached(p)) {
       levelPassed = true;
     }
-  
-    // 7) Reset scroll for next frame
+    
+    // 6) Coins
+    int collectedCount = 0;
+    for (Coin c : coins) {
+      c.scrollX = p.getScrollX();
+      c.scrollY = p.getScrollY();
+      c.tick(p.hasMovedX, p.hasMovedY, p);
+      if (c.collected) collectedCount++;
+    }
+    // draw coin counter in the corner
+    fill(0);                   // black text
+    textSize(20);              // adjust legibility
+    textAlign(LEFT, TOP);
+    text("Coins: " + collectedCount + " / " + coins.size(), 10, 10);
+
+    // 6) Reset camera scroll
     p.scrollX = 0;
     p.scrollY = 0;
-    
-    // 8) Debug: show each coin's world location
-    fill(0);
-    textSize(12);
-    for (Coin c : coins) {
-      if (!c.collected) {
-        // draw at the coin's on‐screen pos just above it
-        text(
-          "(" + (int)c.x + "," + (int)c.y + ")",
-          c.currentX,
-          c.currentY - 5
-        );
-      }
-    }
-    
-    // 9) Debug: show portal world location
-    if (exitPortal.active) {
-      text(
-        "Portal: (" + (int)exitPortal.x + "," + (int)exitPortal.y + ")",
-        exitPortal.currentX,
-        exitPortal.currentY - 8
-      );
-    }
   }
 }
 
 void resetLevel() {
-  // put player back and clear its state
+  // reset player
   p.center();
   p.sy = 0;
   p.doubleJump = false;
@@ -181,60 +182,43 @@ void resetLevel() {
     sp.center();
     sp.devReset = false;
   }
+  // reset coins not collected
+  for (Coin c : coins) {
+    if (!c.collected) {
+      c.center();
+    }
+  }
+  
+  // — RESET THE PORTAL TOO! —
+  exitPortal.center();
+  exitPortal.devReset = false;
 
-  // clear death flag & timer
-  isDead     = false;
+  // clear death & pass flags
+  isDead = false;
   deathTimer = 0;
+  levelPassed = false;
 }
 
-
-// TESTING MOVEMENT
-
+// Movement testing
 void keyPressed() {
-  //
-  if (key == ' ') {
+  if (key==' ') {
     p.center();
-    for (int i = 0; i < platforms.length; i++) {
-      // reset platforms
-      platforms[i].devReset = true;
-    }
-    for (int j = 0; j < spikes.length; j++) {
-      // reset spikes
-      spikes[j].devReset = true;
-    }
+    for (Platform plt : platforms) plt.devReset = true;
+    for (Spike sp : spikes)    sp.devReset = true;
   }
-  // below is in order to handle multiple keypresses at once:
-  if (keyCode == RIGHT) {
-    p.keys[0] = true;
-  }
-  if (keyCode == LEFT) {
-    p.keys[1] = true;
-  }
-  if (keyCode == UP) {
-    p.keys[2] = true;
+  if (keyCode==RIGHT) p.keys[0]=true;
+  if (keyCode==LEFT)  p.keys[1]=true;
+  if (keyCode==UP)    p.keys[2]=true;
+  if (key=='i') {
+    immortal = true;
   }
 }
-
-// releasing keys:
 void keyReleased() {
-  //
-  if (key == ' ') {
-    for (int i = 0; i < platforms.length; i++) {
-      // stop resetting platforms
-      platforms[i].devReset = false;
-    }
-    for (int j = 0; j < spikes.length; j++) {
-      // stop resetting spikes
-      spikes[j].devReset = false;
-    }
+  if (key==' ') {
+    for (Platform plt : platforms) plt.devReset = false;
+    for (Spike sp : spikes)    sp.devReset = false;
   }
-  if (keyCode == RIGHT) {
-    p.keys[0] = false;
-  }
-  if (keyCode == LEFT) {
-    p.keys[1] = false;
-  }
-  if (keyCode == UP) {
-    p.keys[2] = false;
-  }
+  if (keyCode==RIGHT) p.keys[0]=false;
+  if (keyCode==LEFT)  p.keys[1]=false;
+  if (keyCode==UP)    p.keys[2]=false;
 }
