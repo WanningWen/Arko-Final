@@ -91,18 +91,24 @@ void draw() {
     // — NORMAL GAMEPLAY —
     background(255);
   
-    // 1) Draw & tick the player
+    // 1) Player
     p.draw();
     p.tick();
   
-    // 2) Platforms
+    // 2) Death by falling
+    if (p.getY() > height) {
+      isDead     = true;
+      deathTimer = 0;
+    }
+  
+    // 3) Platforms
     for (Platform plt : platforms) {
       plt.scrollX = p.getScrollX();
       plt.scrollY = p.getScrollY();
       plt.tick(p.hasMovedX, p.hasMovedY);
     }
   
-    // 3) Spikes (and death trigger)
+    // 4) Spikes and spike‐death
     for (Spike sp : spikes) {
       sp.scrollX = p.getScrollX();
       sp.scrollY = p.getScrollY();
@@ -113,21 +119,16 @@ void draw() {
       deathTimer = 0;
     }
   
-    // 4) Coins
+    // 5) Coins (using your new tick(p) API)
     for (Coin c : coins) {
-      c.scrollX = p.getScrollX();
-      c.scrollY = p.getScrollY();
       c.tick(p);
     }
   
-    // 5) Activate portal once all coins are collected
+    // 6) Portal unlock & win
     boolean allDone = true;
-    for (Coin c : coins) {
-      if (!c.collected) { allDone = false; break; }
-    }
+    for (Coin c : coins) if (!c.collected) { allDone = false; break; }
     exitPortal.active = allDone;
   
-    // 6) Portal (win trigger)
     exitPortal.scrollX = p.getScrollX();
     exitPortal.scrollY = p.getScrollY();
     exitPortal.tick(p);
@@ -135,7 +136,7 @@ void draw() {
       levelPassed = true;
     }
   
-    // 7) Reset scrolling for next frame
+    // 7) Reset scroll for next frame
     p.scrollX = 0;
     p.scrollY = 0;
   }
