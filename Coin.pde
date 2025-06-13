@@ -27,7 +27,7 @@ class Coin extends Thing {
 
   // 3) Tick: update position, check collision, then draw
   public void tick(Player p) {
-    // pass in the player’s scroll offsets
+    // pass in the players scroll offsets
     position(p.getScrollX(), p.getScrollY());
 
     // collision with player (world x/y vs world x/y)
@@ -38,4 +38,7 @@ class Coin extends Thing {
 
     draw();
   }
+  
+  public float getWorldX() { return x; }
+  public float getWorldY() { return y; }
 }

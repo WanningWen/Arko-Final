@@ -139,6 +139,29 @@ void draw() {
     // 7) Reset scroll for next frame
     p.scrollX = 0;
     p.scrollY = 0;
+    
+    // 8) Debug: show each coin's world location
+    fill(0);
+    textSize(12);
+    for (Coin c : coins) {
+      if (!c.collected) {
+        // draw at the coin's on‐screen pos just above it
+        text(
+          "(" + (int)c.x + "," + (int)c.y + ")",
+          c.currentX,
+          c.currentY - 5
+        );
+      }
+    }
+    
+    // 9) Debug: show portal world location
+    if (exitPortal.active) {
+      text(
+        "Portal: (" + (int)exitPortal.x + "," + (int)exitPortal.y + ")",
+        exitPortal.currentX,
+        exitPortal.currentY - 8
+      );
+    }
   }
 }
 
@@ -193,7 +216,6 @@ void keyPressed() {
 }
 
 // releasing keys:
-
 void keyReleased() {
   //
   if (key == ' ') {
